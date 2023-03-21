@@ -1,0 +1,105 @@
+<button onclick="connectToDevice()">Connect</button>
+
+<script>
+    let deviceSelected;
+    let serverSelected;
+    let characteristic;
+    let isConnected = false;
+    let intervalId;
+
+    function connectToDevice() {
+        navigator.bluetooth.requestDevice({
+            filters: [{
+                services: ['4fafc201-1fb5-459e-8fcc-c5c9c331914b']
+            }]
+        })
+            .then(device => {
+                deviceSelected = device;
+                console.log('Device found:', device.name);
+                device.addEventListener('gattserverdisconnected', handleDisconnected);
+                return device.gatt.connect();
+            })
+            .then(server => {
+                serverSelected = server;
+                console.log('Connected to server');
+                isConnected = true;
+                return server.getPrimaryService('4fafc201-1fb5-459e-8fcc-c5c9c331914b');
+            }).then(service => {
+                console.log('Service found:', service.uuid);
+                return service.getCharacteristic('beb5483e-36e1-4688-b7f5-ea07361b26a8');
+            })
+            .then(char => {
+                console.log('Characteristic found:', char.uuid);
+                characteristic = char;
+                startNotifications();
+            })
+            .catch(error => {
+                console.log('Error:', error);
+            });
+    }
+
+    function startNotifications() {
+        characteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+        characteristic.startNotifications()
+            .then(() => {
+                console.log('Notifications started');
+            })
+            .catch(error => {
+                console.log('Error:', error);
+            });
+    }
+
+    function stopNotifications() {
+        if (isConnected) {
+            characteristic.stopNotifications()
+                .then(() => {
+                    console.log('Notifications stopped');
+                    clearInterval(intervalId);
+                })
+                .catch(error => {
+                    console.log('Error:', error);
+                });
+        }
+    }
+
+    function handleNotifications(event) {
+        const value = event.target.value;
+        const val = value.getUint8(1);
+        console.log('Valor:', val);
+    }
+
+    function handleDisconnected(event) {
+        console.log('Disconnected');
+        reconect();
+    }
+
+    function reconect() {
+        device = deviceSelected;
+        device.gatt.connect()
+            .then(selectedServer => {
+                server = selectedServer;
+                console.log('Connected to server');
+                isConnected = true;
+                clearInterval(intervalId);
+                return server.getPrimaryService('4fafc201-1fb5-459e-8fcc-c5c9c331914b');
+            })
+            .then(service => {
+                console.log('Service found:', service.uuid);
+                return service.getCharacteristic('beb5483e-36e1-4688-b7f5-ea07361b26a8');
+            })
+            .then(char => {
+                console.log('Characteristic found:', char.uuid);
+                characteristic = char;
+                startNotifications();
+            })
+            .then(_ => {
+                console.log('Notifications started');
+                document.getElementById('stopNotifications').disabled = false;
+            })
+            .catch(error => {
+                console.log('Error:', error);
+                reconect();
+            });
+    }
+
+</script>
