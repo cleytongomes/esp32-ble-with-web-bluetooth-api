@@ -63,8 +63,7 @@
     }
 
     function handleNotifications(event) {
-        const value = event.target.value;
-        const val = value.getUint8(1);
+        let val = event.target.value.getUint8();
         console.log('Valor:', val);
     }
 
