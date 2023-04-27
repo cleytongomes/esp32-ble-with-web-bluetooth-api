@@ -1,4 +1,4 @@
-# ESP32 using BLE to comunicate with js
+# ESP32 ENVIANDO INFORMAÇÕES VIA BLE PARA O NAVEGADOR WEB
 Este projeto consiste em um código em Javascript e outro em C++ para o ESP32, que permite o envio de dados diretamente do ESP para um navegador web usando o bluetooth low energy.
 
 ## Instalação
